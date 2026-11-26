@@ -6,8 +6,7 @@
 UpwardCompressorAudioProcessor::UpwardCompressorAudioProcessor()
     : AudioProcessor (BusesProperties()
                         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "Parameters", createParameterLayout())
+                        .withOutput ("Output", juce::true)),())
 {
 }
 
@@ -15,28 +14,27 @@ UpwardCompressorAudioProcessor::~UpwardCompressorAudioProcessor()
 {
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudio{
-    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { "lowLevel", 1 },
         "Low Level",
         juce::NormalisableRange<float> (0.0f, 48.0f, 0.1f),
         6.0f));
 
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { "highLevel", 1 },
         "High Level",
         juce::NormalisableRange<float> (-48.0f, 0.0f, 0.1f),
         -6.0f));
 
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { "outputGain", 1 },
-        "Output Gain",
-        juce::NormalisableRange<float> (-60.0f, 0.0f, 0.1f),
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        ju{ "outputGain", 1 },isableRange<float> (-60.0f, 0.0f, 0.1f),
         -0.5f));
 
-    return { params.begin(), params.end() };
+    return layout;
 }
 
 void UpwardCompressorAudioProcessor::prepareToPlay (double sampleRate, int /*samplesPerBlock*/)
@@ -179,8 +177,7 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
     meterPeakR.store (peakOutR);
 }
 
-juce::AudioProcessorEditor* UpwardCompressorAudioProcessor::createEditor()
-{
+juce::AudioProcessorEditor* UpwardCompressorAudio{
     return new UpwardCompressorAudioProcessorEditor (*this);
 }
 
