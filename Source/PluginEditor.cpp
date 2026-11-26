@@ -160,7 +160,11 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colour::fromRGB (100, 105, 115));
     g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 9.5f, juce::Font::plain));
-    g.drawText ("Sonart.db", 0, 542, getWidth(), 16, juce::Justfalse);lowSlider.setBounds (115, 60, 48, 300);
+  g.drawText ("Sonart.db", 0, 542, getWidth(), 16, juce::Justification::centred);
+}
+
+void UpwardCompressor{
+    lowSlider.setBounds (115, 60, 48, 300);
     highSlider.setBounds (335, 60, 48, 300);
     outputSlider.setBounds (610, 60, 48, 300);
 }
