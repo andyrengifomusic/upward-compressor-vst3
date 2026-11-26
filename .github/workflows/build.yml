@@ -26,6 +26,6 @@ on:
           }
 
       - name: Upload VST3 Artifact
-        uses: actions/upload-artifact@v4
-        name: Upward-Compressor-Windows-VST3
+with:
+          name: Upward-Compressor-Windows-VST3
           path: artifacts/
