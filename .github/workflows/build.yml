@@ -6,19 +6,23 @@ jobs:
   build:
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      - run: cmake --build build --config Release --target UpwardCompressor_VST3 --parallel
+      - name: Build VST3
+        run: cmake --build build --config Release --target UpwardCompressor_VST3 --parallel
 
-      - shell: pwsh
+      - name: Package VST3
+        shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts
           $vst3 = Get-ChildItem -Path build -Recurse -Filter "*.vst3" -Directory | Select-Object -First 1
           Copy-Item -Path $vst3.FullName -Destination "artifacts/Upward Compressor.vst3" -Recurse
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
         with:
           name: Upward-Compressor-Windows-VST3
           path: artifacts/
