@@ -1,36 +1,23 @@
-name: Build VST3 (Windows x64)
+name: Build VST3
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-2022
+    - uses: actions/checkout@v4
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-     - name: Configure CMake
--B build -DCMAKE_BUILD_TYPE=Release3
-        run: cmake --build build --config Release --target UpwardCompressor_VST3 --parallel
+      - run: cmake --build build --config Release --target UpwardCompressor_VST3 --parallel
 
-      - name: Package VST3
-        shell: pwsh
+      - shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts
           $vst3 = Get-ChildItem -Path build -Recurse -Filter "*.vst3" -Directory | Select-Object -First 1
-          if ($vst3) {
-              Write-Host "Found VST3 at: $($vst3.FullName)"
-              Copy-Item -Path $vst3.FullName -Destination "artifacts/Upward Compressor.vst3" -Recurse
-          } else {
-              Write-Error "Could not find .vst3 folder in build tree"
-              exit 1
-          }
+          Copy-Item -Path $vst3.FullName -Destination "artifacts/Upward Compressor.vst3" -Recurse
 
-      - name: Upload VST3 Artifact
+      - uses: actions/upload-artifact@v4
         with:
           name: Upward-Compressor-Windows-VST3
           path: artifacts/
