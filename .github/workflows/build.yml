@@ -2,14 +2,19 @@ name: Build VST3 (Windows x64)
 
 on:
   push:
-    main ]steps:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build VST3
+-B build -DCMAKE_BUILD_TYPE=Release3
         run: cmake --build build --config Release --target UpwardCompressor_VST3 --parallel
 
       - name: Package VST3
@@ -26,6 +31,6 @@ on:
           }
 
       - name: Upload VST3 Artifact
-with:
+        with:
           name: Upward-Compressor-Windows-VST3
           path: artifacts/
