@@ -17,7 +17,7 @@ void CustomFaderLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, 
     g.setColour (juce::Colours::black.withAlpha (0.6f));
     g.fillRoundedRectangle (capX + 1.0f, capY + 2.0f, capW, capH, 3.0f);
 
-    grad (juce::Colour::fromRGB (85, 90, 98), capX, capY,
+    juce::ColourGradient grad (juce::Colour::fromRGB (85, 90, 98), capX, capY,
                                juce::Colour::fromRGB (25, 27, 30), capX, capY + capH, false);
     g.setGradientFill (grad);
     g.fillRoundedRectangle (capX, capY, capW, capH, 3.0f);
@@ -25,7 +25,8 @@ void CustomFaderLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, 
     g.setColour (juce::Colour::fromRGB (110, 115, 125));
     g.drawRoundedRectangle (capX, capY, capW, capH, 3.0f, 1.0f);
 
-    g.setColour (juce::(240, 242, 245));(juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::Font::bold));
+    g.setColour (juce::Colour::fromRGB (240, 242, 245));
+    g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::Font::bold));
     g.drawText (juce::String (slider.getValue(), 1), (int)capX, (int)capY, (int)capW, (int)capH, juce::Justification::centred, false);
 }
 
@@ -34,7 +35,9 @@ UpwardCompressorAudioProcessorEditor::UpwardCompressorAudioProcessorEditor (Upwa
 {
     setSize (780, 580);
 
-    auto setup = [this](jus) {        s.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
+    auto setup = [this](juce::Slider& s) {
+        s.setSliderStyle (juce::Slider::LinearVertical);
+        s.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
         s.setLookAndFeel (&customLookAndFeel);
         addAndMakeVisible (s);
     };
@@ -69,36 +72,30 @@ void UpwardCompressorAudioProcessorEditor::timerCallback()
 
 void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // Fondo general
     g.fillAll (juce::Colour::fromRGB (16, 17, 20));
 
-    // Panel Izquierdo
-    juce::Rectangle<float> leftPanel (20.0f, 20.0f, 470.0f, 435.0f);
+    // Paneles
     g.setColour (juce::Colour::fromRGB (24, 26, 30));
-    g.fillRoundedRectangle (leftPanel, 8.0f);
-    g.setColour (juce::Colour::fromRGB (45, 48, 55));
-    g.drawRoundedRectangle (leftPanel, 8.0f, 1.0f);
+    g.fillRoundedRectangle (20.0f, 20.0f, 470.0f, 435.0f, 8.0f);
+    g.fillRoundedRectangle (510.0f, 20.0f, 250.0f, 435.0f, 8.0f);
 
-    // Panel Derecho
-    juce::Rectangle<float> rightPanel (510.0f, 20.0f, 250.0f, 435.0f);
-    g.setColour (juce::Colour::fromRGB (24, 26, 30));
-    g.fillRoundedRectangle (rightPanel, 8.0f);
     g.setColour (juce::Colour::fromRGB (45, 48, 55));
-    g.drawRoundedRectangle (rightPanel, 8.0f, 1.0f);
+    g.drawRoundedRectangle (20.0f, 20.0f, 470.0f, 435.0f, 8.0f, 1.0f);
+    g.drawRoundedRectangle (510.0f, 20.0f, 250.0f, 435.0f, 8.0f, 1.0f);
 
     // Titulos
-    g.setColour (juce::(220, 225, 235));(juce::Font::getDefaultSansSerifFontName(), 13.0f,g.drawText ("LOW LEVEL",  20,  35, 235, 20, juce::Justification::centred, false);
+    g.setColour (juce::Colour::fromRGB (220, 225, 235));
+    g.setFont (juce::Font (juce::Font::getDefaultSansSerifFontName(), 13.0f, juce::Font::bold));
+    g.drawText ("LOW LEVEL",  20,  35, 235, 20, juce::Justification::centred, false);
     g.drawText ("HIGH LEVEL", 255, 35, 235, 20, juce::Justification::centred, false);
     g.drawText ("OUTPUT",     510, 35, 250, 20, juce::Justification::centred, false);
 
     const float trackY = 60.0f;
     const float trackH = 300.0f;
 
-    // Pistas y Vumetros
     // Low Boost (Verde)
-    juce::Rectangle<float> lowTrack (130.0f, trackY, 18.0f, trackH);
     g.setColour (juce::Colours::black);
-    g.fillRoundedRectangle (lowTrack, 2.0f);
+    g.fillRoundedRectangle (130.0f, trackY, 18.0f, trackH, 2.0f);
     float lowFill = std::min (1.0f, std::max (0.0f, currentLowMeter / 48.0f)) * trackH;
     if (lowFill > 1.0f)
     {
@@ -107,10 +104,9 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
     // High Reduccion (Rojo)
-    juce::Rectangle<float> highTrack (350.0f, trackY, 18.0f, trackH);
     g.setColour (juce::Colours::black);
-    g.fillRoundedRectangle (highTrack, 2.0f);
-    float highFill = std::min (1.0f,(0.0f, std::abs (currentHighMeter) / 48.0f)) * trackH;
+    g.fillRoundedRectangle (350.0f, trackY, 18.0f, trackH, 2.0f);
+    float highFill = std::min (1.0f, std::max (0.0f, std::abs (currentHighMeter) / 48.0f)) * trackH;
     if (highFill > 1.0f)
     {
         g.setColour (juce::Colour::fromRGB (244, 63, 94));
@@ -119,8 +115,7 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
 
     // Output L y R (Ambar)
     auto drawOutBar = [&](float bx, float peak) {
-        g.setColour (juce::Colours::black);
-        g.fillRoundedRectangle (bx, trackY, 12.0f, trackH, 2.0f);
+        g.setColour (juce::Colg.fillRoundedRectangle (bx, trackY, 12.0f, trackH, 2.0f);
         float fill = std::min (1.0f, std::max (0.0f, peak)) * trackH;
         if (fill > 1.0f)
         {
@@ -131,8 +126,10 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
     drawOutBar (610.0f, currentPeakL);
     drawOutBar (638.0f, currentPeakR);
 
-    // Cajas de lectura numerica
-    auto drawBox = [&](int bx, int by, int bw, int bh, const jutext, juce::Colour col) {g.fillRoundedRectangle ((float)bx, (float)by, (float)bw, (float)bh, 3.0f);
+    // Cajas digitales
+    auto drawBox = [&](int bx, int by, int bw, int bh, const juce::String& text, juce::Colour col) {
+        g.setColour (juce::Colours::black);
+        g.fillRoundedRectangle ((float)bx, (float)by, (float)bw, (float)bh, 3.0f);
         g.setColour (juce::Colour::fromRGB (50, 53, 60));
         g.drawRoundedRectangle ((float)bx, (float)by, (float)bw, (float)bh, 3.0f, 1.0f);
         g.setColour (col);
@@ -141,7 +138,7 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
     };
 
     drawBox (108, 415, 62, 24, juce::String (lowSlider.getValue(), 1), juce::Colour::fromRGB (240, 245, 250));
-    juhRed = (currentHighMeter <= -0.05f) ? juce::String (currentHighMeter, 1) : "0.0";
+    juce::String hRed = (currentHighMeter <= -0.05f) ? juce::String (currentHighMeter, 1) : "0.0";
     drawBox (328, 415, 62, 24, hRed, juce::Colour::fromRGB (251, 113, 133));
 
     juce::String dL = (currentPeakL > 1e-4f) ? juce::String (20.0f * std::log10 (currentPeakL), 1) : "-inf";
@@ -160,7 +157,7 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colour::fromRGB (100, 105, 115));
     g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 9.5f, juce::Font::plain));
-  g.drawText ("Sonart.db", 0, 542, getWidth(), 16, juce::Justification::centred);
+    g.drawText ("Sonart.db", 0, 542, getWidth(), 16, juce::Justification::centred, false);
 }
 
 void UpwardCompressor{
