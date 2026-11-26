@@ -1,0 +1,62 @@
+#pragma once
+
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <atomic>
+
+class UpwardCompressorAudioProcessor : public juce::AudioProcessor
+{
+public:
+    UpwardCompressorAudioProcessor();
+    ~UpwardCompressorAudioProcessor() override;
+
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void releaseResources() override;
+
+    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+
+    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
+    juce::AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override;
+
+    const juce::String getName() const override;
+
+    bool acceptsMidi() const override;
+    bool producesMidi() const override;
+    bool isMidiEffect() const override;
+    double getTailLengthSeconds() const override;
+
+    int getNumPrograms() override;
+    int getCurrentProgram() override;
+    void setCurrentProgram (int index) override;
+    const juce::String getProgramName (int index) override;
+    void changeProgramName (int index, constnewName) override;) override;
+    void setStateInformation (const void* data, int sizeInBytes) override;
+
+    juce::AudioProcessorValueTreeState apvts;
+
+    // Medidores atómicos para lectura fluida desde la interfaz gráfica
+    std::atomic<float> meterLowBoost { 0.0f };
+    std::atomic<float> meterHighAtten { 0.0f };
+    std::atomic<float> meterPeakL { 0.0f };
+    std::atomic<float> meterPeakR { 0.0f };
+
+private:
+    static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+    // Estado DSP y balísticas
+    float lowEnv = 0.0f;
+    float highEnv = 0.0f;
+    float lowGainSmooth = 1.0f;
+    float highGainSmooth = 1.0f;
+
+    float lowAttCoeff = 0.0f;
+    float lowRelCoeff = 0.0f;
+    float highAttCoeff = 0.0f;
+    float highRelCoeff = 0.0f;
+
+    static constexpr float downwardRatio = 3.0f;
+    static constexpr float downwardSlope = 1.0f - (1.0f / downwardRatio);
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UpwardCompressorAudioProcessor)
+};
