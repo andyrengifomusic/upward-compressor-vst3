@@ -5,6 +5,7 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: windows-2022
+    steps:
     - uses: actions/checkout@v4
 
       - run: cmake -B build -DCMAKE_BUILD_TYPE=Release
