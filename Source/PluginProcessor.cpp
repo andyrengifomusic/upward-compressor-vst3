@@ -15,25 +15,21 @@ UpwardCompressorAudioProcessor::~UpwardCompressorAudioProcessor()
 {
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudioProcessor::createParameterLayout()
-{
+juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudio{
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    // Low Level: 0.0 a 48.0 dB (Default: 6.0 dB)
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { "lowLevel", 1 },
         "Low Level",
         juce::NormalisableRange<float> (0.0f, 48.0f, 0.1f),
         6.0f));
 
-    // High Level: -48.0 a 0.0 dB (Default: -6.0 dB)
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { "highLevel", 1 },
         "High Level",
         juce::NormalisableRange<float> (-48.0f, 0.0f, 0.1f),
         -6.0f));
 
-    // Output Gain: -60.0 a 0.0 dB (Default: -0.5 dB)
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { "outputGain", 1 },
         "Output Gain",
@@ -47,11 +43,10 @@ void UpwardCompressorAudioProcessor::prepareToPlay (double sampleRate, int /*sam
 {
     const float sr = static_cast<float> (sampleRate > 0.0 ? sampleRate : 44100.0);
 
-    // Coeficientes de envolvente (tiempos de ataque y relajación)
-    lowAttCoeff  = std::exp (-1.0f / (0.020f * sr)); // 20 ms ataque upward
-    lowRelCoeff  = std::exp (-1.0f / (0.150f * sr)); // 150 ms relajación upward
-    highAttCoeff = std::exp (-1.0f / (0.005f * sr)); // 5 ms ataque downward
-    highRelCoeff = std::exp (-1.0f / (0.080f * sr)); // 80 ms relajación downward
+    lowAttCoeff  = std::exp (-1.0f / (0.020f * sr));
+    lowRelCoeff  = std::exp (-1.0f / (0.150f * sr));
+    highAttCoeff = std::exp (-1.0f / (0.005f * sr));
+    highRelCoeff = std::exp (-1.0f / (0.080f * sr));
 
     lowEnv = 0.0f;
     highEnv = 0.0f;
@@ -114,7 +109,6 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
         const float dryR = (channelDataR != nullptr) ? channelDataR[i] : dryL;
         const float detIn = std::max (std::abs (dryL), std::abs (dryR));
 
-        // 1. DETECCIÓN Y COMPRESIÓN UPWARD (LOW LEVEL)
         if (detIn > lowEnv)
             lowEnv = lowAttCoeff * lowEnv + (1.0f - lowAttCoeff) * detIn;
         else
@@ -130,7 +124,6 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
             {
                 const float depth = threshDb - inDb;
                 const float boost = std::min (pLow, depth * 0.65f);
-                // Protección para picos: no altera transientes por encima de -6 dB
                 const float peakSafety = (inDb >= -6.0f) ? 0.0f : std::max (0.0f, std::min (1.0f, (-6.0f - inDb) / 18.0f));
                 targetLowBoostDb = boost * peakSafety;
             }
@@ -145,7 +138,6 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
         const float actualLowBoostDb = 20.0f * std::log10 (std::max (1e-6f, lowGainSmooth));
         maxBlockBoost = std::max (maxBlockBoost, actualLowBoostDb);
 
-        // 2. DETECCIÓN Y COMPRESIÓN DOWNWARD (HIGH LEVEL)
         if (detIn > highEnv)
             highEnv = highAttCoeff * highEnv + (1.0f - highAttCoeff) * detIn;
         else
@@ -169,10 +161,11 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
         const float actualHighAttenDb = 20.0f * std::log10 (std::max (1e-6f, highGainSmooth));
         maxBlockAtten = std::min (maxBlockAtten, actualHighAttenDb);
 
-        // 3. COMBINACIÓN DINÁMICA Y SALIDA
         const float totalDynamics = lowGainSmooth * highGainSmooth;
         const float outLVal = std::max (-1.0f, std::min (1.0f, dryL * totalDynamics * outGainLin));
-        const float outRVal = std::max (-1.0f,(1.0f, dryR * totalDynamics * outGainLin));[i] = outLVal;
+        const float outRVal = std::max (-1.0f, std::min (1.0f, dryR * totalDynamics * outGainLin));
+
+        channelDataL[i] = outLVal;
         if (channelDataR != nullptr)
             channelDataR[i] = outRVal;
 
@@ -186,24 +179,10 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
     meterPeakR.store (peakOutR);
 }
 
-bool UpwardCompressorAudioProcessor::hasEditor() const
-{
-    return true;
-}
-
 juce::AudioProcessorEditor* UpwardCompressorAudioProcessor::createEditor()
 {
     return new UpwardCompressorAudioProcessorEditor (*this);
 }
-
-const juce::String UpwardCompressorAudioconstconst         { return false; }cesMidi() const        { return false; }
-bool UpwardCompressorAudioProcessor::isMidiEffect() const        { return false; }
-double UpwardCompressorAudioProcessor::getTailLengthSeconds() const { return 0.0; }
-
-int UpwardCompressorAudioProcessor::getNumPrograms()            { return 1; }
-int UpwardCompressorAudioProcessor::getCurrentProgram()         { return 0; }
-void UpwardCompressorAudioProcessor::setCurrentProgram (int)    {}
-const juce::String UpwardCompressorAudio(int) { return {}; } (int, const juce::String&) {}
 
 void UpwardCompressorAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
