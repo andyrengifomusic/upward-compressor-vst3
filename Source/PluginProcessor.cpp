@@ -5,8 +5,8 @@
 
 UpwardCompressorAudioProcessor::UpwardCompressorAudioProcessor()
     : AudioProcessor (BusesProperties()
-                        .withInput  ("Input",  juce::AudioChanneltrue))),
-      apvts (*this, nullptr, "Parameters", createParameterLayout())
+                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+                        .withOutput ("Output", juce::true)),())
 {
 }
 
@@ -19,13 +19,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudioProcess
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { "lowLevel", 1 },
-        "Low Level",
-        juce::NormalisableRange<float> (0.0f, 48.0f, 0.1f),
+        ju{ "lowLevel", 1 },isableRange<float> (0.0f, 48.0f, 0.1f),
         6.0f));
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        { "highLevel", 1 },NormalisableRange<float> (-48.0f, 0.0f, 0.1f),
+        juce::ParameterID { "highLevel", 1 },
+        "High Level",
+        juce::NormalisableRange<float> (-48.0f, 0.0f, 0.1f),
         -6.0f));
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
@@ -79,11 +79,9 @@ void UpwardCompressorAudioProcessor::setCurrentProgram (int index)
 
 const juce::String UpwardCompressorAudioProcessor::getProgramName (int index)
 {
-    juce::ignoreUnused (index);
-    return {};
-}
-
-void UpwardCompressorAudioProcessor::changeProgramName (int index, constnewName)
+    ju(index);ProgramName (int index, const juce::String& newName)
+{
+    juce::ignoreUnused (index, newName);
 }
 
 void UpwardCompressorAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -109,7 +107,8 @@ void UpwardCompressorAudioProcessor::releaseResources()
 bool UpwardCompressorAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::Audioreturn false;
+     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+        return false;
 
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
@@ -152,9 +151,7 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
     {
         const float dryL = channelDataL[i];
         const float dryR = channelDataR[i];
-        const float detIn = std::max ((dryL), std::abs (dryR)); COMPRESSION
-        if (detIn > lowEnv)
-            lowEnv = lowAttCoeff * lowEnv + (1.0f - lowAttCoeff) * detIn;
+        const float detIn = std::max ((dryL), std::abs (dryR)); = lowAttCoeff * lowEnv + (1.0f - lowAttCoeff) * detIn;
         else
             lowEnv = lowRelCoeff * lowEnv + (1.0f - lowRelCoeff) * detIn;
 
@@ -182,7 +179,6 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
         const float actualLowBoostDb = juce::Decibels::gainToDecibels (std::max (1e-6f, lowGainSmooth));
         blockMaxBoost = std::max (blockMaxBoost, actualLowBoostDb);
 
-        // 2. HIGH LEVEL DOWNWARD COMPRESSION
         if (detIn > highEnv)
             highEnv = highAttCoeff * highEnv + (1.0f - highAttCoeff) * detIn;
         else
@@ -205,7 +201,6 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
         const float actualHighAttenDb = juce::Decibels::gainToDecibels (std::max (1e-6f, highGainSmooth));
         blockMaxAtten = std::min (blockMaxAtten, actualHighAttenDb);
 
-        // 3. COMBINAR DINAMICA Y GANANCIA DE SALIDA
         const float totalGain = lowGainSmooth * highGainSmooth * outGainLin;
         const float outL = std::clamp (dryL * totalGain, -1.0f, 1.0f);
         const float outR = std::clamp (dryR * totalGain, -1.0f, 1.0f);
