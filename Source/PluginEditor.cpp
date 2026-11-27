@@ -3,17 +3,23 @@
 
 CustomFaderLookAndFeel::CustomFaderLookAndFeel() {}
 
-void CustomFaderLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
-                                               float sliderPos, float, float,
-                                               const juce::Slider::SliderStyle,slider) = 24.0f;
-    float capX = x + (width - capW) * 0.5f;
-    float capY = sliderPos - capH * 0.5f;
+void CustomFaderLookAndFeel::drawLinearSlider (jug, int x, int y, int width, int height,, float minSliderPos, float maxSliderPos,
+                                               const juce::Slider::SliderStyle style,slider)Pos, style);
 
+    const float capW = 46.0f;
+    const float capH = 24.0f;
+    const float capX = (float)x + ((float)width - capW) * 0.5f;
+    const float capY = sliderPos - capH * 0.5f;
+
+    // Fondo del cap
     g.setColour (juce::Colour::fromRGB (28, 30, 34));
     g.fillRoundedRectangle (capX, capY, capW, capH, 3.0f);
+
+    // Borde
     g.setColour (juce::Colour::fromRGB (110, 115, 125));
     g.drawRoundedRectangle (capX, capY, capW, capH, 3.0f, 1.0f);
 
+    // Texto del valor
     g.setColour (juce::Colour::fromRGB (240, 242, 245));
     g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::Font::bold));
     g.drawText (juce::String (slider.getValue(), 1), (int)capX, (int)capY, (int)capW, (int)capH, juce::Justification::centred, false);
@@ -55,7 +61,7 @@ void UpwardCompressorAudioProcessorEditor::timerCallback()
     currentLowMeter  = std::max (audioProcessor.meterLowBoost.load(),  currentLowMeter  * 0.92f);
     currentHighMeter = std::min (audioProcessor.meterHighAtten.load(), currentHighMeter * 0.90f);
     currentPeakL     = std::max (audioProcessor.meterPeakL.load(),     currentPeakL     * 0.88f);
-    currentPeakR     = std::max (audioProcessor.meterPeakR.load(),     currentPeakR     * 0.88f);
+    currentPeakR     =(audioProcessor.meterPeakR.load(),     currentPeakR     * 0.88f);
     repaint();
 }
 
@@ -70,8 +76,10 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
 
     // Titulos
     g.setColour (juce::Colour::fromRGB (220, 225, 235));
-    g.setFont (juce::Font (juce::Font::getDefaultSansSerifFontName(), 13.0f, juce::g.drawText ("LOW LEVEL",  20,  35, 235, 20, juce::Justification::centred, false);
-    g.drawText ("HIGH LEVEL", 255, 35, 235, 20, juce::false);, 250, 20, juce::Justification::centred, false);
+    g.setFont (juce::Font (juce::Font::getDefaultSansSerifFontName(), 13.0f, juce::Font::bold));
+    g.drawText ("LOW LEVEL",  20,  35, 235, 20, juce::Justification::centred, false);
+    g.drawText ("HIGH LEVEL", 255, 35, 235, 20, juce::Justification::centred, false);
+    g.drawText ("OUTPUT",     510, 35, 250, 20, juce::Justification::centred, false);
 
     const float tY = 60.0f, tH = 300.0f;
 
@@ -80,29 +88,33 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillRoundedRectangle (130.0f, tY, 18.0f, tH, 2.0f);
     float lH = std::min (1.0f, std::max (0.0f, currentLowMeter / 48.0f)) * tH;
     g.setColour (juce::Colour::fromRGB (52, 211, 153));
-    if (lH > 1.0f) g.fillRoundedRectangle (131.0f, tY + tH - lH, 16.0f, lH, 2.0f);
+    if (lH > 1.0f) 
+        g.fillRoundedRectangle (131.0f, tY + tH - lH, 16.0f, lH, 2.0f);
 
     // High meter (Rojo)
-    g.setColour (juce::Colg.fillRoundedRectangle (350.0f, tY, 18.0f, tH, 2.0f);
+    g.setColour (juce::Colours::black);
+    g.fillRoundedRectangle (350.0f, tY, 18.0f, tH, 2.0f);
     float hH = std::min (1.0f, std::max (0.0f, std::abs (currentHighMeter) / 48.0f)) * tH;
     g.setColour (juce::Colour::fromRGB (244, 63, 94));
-    if (hH > 1.0f) g.fillRoundedRectangle (351.0f, tY, 16.0f, hH, 2.0f);
+    if (hH > 1.0f) 
+        g.fillRoundedRectangle (351.0f, tY, 16.0f, hH, 2.0f);
 
     // Output meters (Ambar)
-    g.setColour (juce::g.fillRoundedRectangle (610.0f, tY, 12.0f, tH, 2.0f);
+    g.setColour (g.fillRoundedRectangle (610.0f, tY, 12.0f, tH, 2.0f);
     g.fillRoundedRectangle (638.0f, tY, 12.0f, tH, 2.0f);
     g.setColour (juce::Colour::fromRGB (245, 158, 11));
     float pL = std::min (1.0f, std::max (0.0f, currentPeakL)) * tH;
     float pR = std::min (1.0f, std::max (0.0f, currentPeakR)) * tH;
-    if (pL > 1.0f) g.fillRoundedRectangle (611.0f, tY + tH - pL, 10.0f, pL, 1.0f);
-    if (pR > 1.0f) g.fillRoundedRectangle (639.0f, tY + tH - pR, 10.0f, pR, 1.0f);
+    if (pL > 1.0f) 
+        g.fillRoundedRectangle (611.0f, tY + tH - pL, 10.0f, pL, 1.0f);
+    if (pR > 1.0f) 
+        g.fillRoundedRectangle (639.0f, tY + tH - pR, 10.0f, pR, 1.0f);
 
     // Logos
     g.setColour (juce::Colour::fromRGB (225, 228, 235));
     g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::bold));
     g.drawText ("A  |  R", 0, 485, getWidth(), 20, juce::Justification::centred, false);
-    g.drawText ("UPWARD COMPRESSOR", 0, 515, getWidth(), 18, juce::Justification::centred, false);
-    g.drawText ("Sonart.db", 0, 542, getWidth(), 16, juce::Justification::centred, false);
+    g.drawText ("UPWARD COMPRESSOR", 0, 515, getWidth(), 18, juce::Justfalse);2, getWidth(), 16, juce::Justification::centred, false);
 }
 
 void UpwardCompressorAudioProcessorEditor::resized()
