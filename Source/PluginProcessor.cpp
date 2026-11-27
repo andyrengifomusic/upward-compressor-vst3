@@ -78,7 +78,9 @@ void UpwardCompressorAudioProcessor::setCurrentProgram (int index)
     juce::ignoreUnused (index);
 }
 
-const juUpwardCompressorAudioProcessor::getProgramName (int index)ignoreUnused (index);
+const juce::String UpwardCompressorAudioProcessor::getProgramName (int index)
+{
+    juce::ignoreUnused (index);
     return {};
 }
 
