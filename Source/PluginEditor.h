@@ -1,7 +1,6 @@
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
-#include <juce_audio_processors/juce_audio_processors.h>
+#include <JuceHeader.h>
 #include "PluginProcessor.h"
 
 class CustomFaderLookAndFeel : public juce::LookAndFeel_V4
@@ -13,7 +12,10 @@ public:
                            const juce::Slider::SliderStyle style, juce::Slider& slider) override;
 };
 
-class UpwardCompressorjuce::AudioProcessorEditor,:
+class UpwardCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                            private juce::Timer
+{
+public:
     explicit UpwardCompressorAudioProcessorEditor (UpwardCompressorAudioProcessor&);
     ~UpwardCompressorAudioProcessorEditor() override;
 
@@ -23,15 +25,16 @@ class UpwardCompressorjuce::AudioProcessorEditor,:
 
 private:
     UpwardCompressorAudioProcessor& audioProcessor;
-
     CustomFaderLookAndFeel customLookAndFeel;
 
     juce::Slider lowSlider;
-    juhighSlider;ce::AudioProcessorValueTreeState::SliderAttachment> lowAttachment;
+    juce::Slider highSlider;
+    juce::Slider outputSlider;
+
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lowAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> highAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> outputAttachment;
 
-    // Niveles suavizados para los medidores de animación fluida (60 FPS)
     float currentLowMeter  = 0.0f;
     float currentHighMeter = 0.0f;
     float currentPeakL     = 0.0f;
