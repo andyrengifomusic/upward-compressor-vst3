@@ -30,14 +30,17 @@ public:
     int getCurrentProgram() override;
     void setCurrentProgram (int index) override;
     const juce::String getProgramName (int index) override;
-    void changeProgramName (int index, constnewName) override; override;
+    void changeProgramName (int index, const juce::String& newName) override;
+
+    void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState apvts;
 
     std::atomic<float> meterLowBoost  { 0.0f };
     std::atomic<float> meterHighAtten { 0.0f };
-    meterPeakL     { 0.0f };> meterPeakR     { 0.0f };
+    std::atomic<float> meterPeakL     { 0.0f };
+    std::atomic<float> meterPeakR     { 0.0f };
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
