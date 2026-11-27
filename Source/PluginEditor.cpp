@@ -24,7 +24,8 @@ void CustomFaderLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, 
 
     // Texto del valor
     g.setColour (juce::Colour::fromRGB (240, 242, 245));
-    g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::g.drawText (juce::String (slider.getValue(), 1), (int)capX, (int)capY, (int)capW, (int)capH, juce::Justification::centred, false);
+    g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::Font::bold));
+    g.drawText (juce::String (slider.getValue(), 1), (int)capX, (int)capY, (int)capW, (int)capH, juce::Justification::centred, false);
 }
 
 UpwardCompressorAudioProcessorEditor::UpwardCompressorAudioProcessorEditor (UpwardCompressorAudioProcessor& p)
@@ -106,7 +107,7 @@ void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillRoundedRectangle (610.0f, tY, 12.0f, tH, 2.0f);
     g.fillRoundedRectangle (638.0f, tY, 12.0f, tH, 2.0f);
     g.setColour (juce::Colour::fromRGB (245, 158, 11));
-    float pL =(1.0f, std::max (0.0f, currentPeakL)) * tH;
+    float pL = std::min (1.0f,(0.0f, currentPeakL)) * tH;
     float pR = std::min (1.0f, std::max (0.0f, currentPeakR)) * tH;
     if (pL > 1.0f) 
         g.fillRoundedRectangle (611.0f, tY + tH - pL, 10.0f, pL, 1.0f);
