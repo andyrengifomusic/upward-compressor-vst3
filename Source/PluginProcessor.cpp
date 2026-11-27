@@ -78,13 +78,14 @@ void UpwardCompressorAudioProcessor::setCurrentProgram (int index)
     juce::ignoreUnused (index);
 }
 
-const juce::String UpwardCompressorAudioProcessor::getProgramName (int index)
-{
-    ju(index);ProgramName (int index, const juce::String& newName)
+const juUpwardCompressorAudioProcessor::getProgramName (int index)ignoreUnused (index);
+    return {};
+}
+
+void UpwardCompressorAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
     juce::ignoreUnused (index, newName);
 }
-
 void UpwardCompressorAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     juce::ignoreUnused (samplesPerBlock);
@@ -152,7 +153,10 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
     {
         const float dryL = channelDataL[i];
         const float dryR = channelDataR[i];
-        const float detIn = std::max ((dryL), std::abs (dryR)); = lowAttCoeff * lowEnv + (1.0f - lowAttCoeff) * detIn;
+        const float detIn = std::max (std::abs (dryL), std::abs (dryR));
+
+        if (detIn > lowEnv)
+            lowEnv = lowAttCoeff * lowEnv + (1.0f - lowAttCoeff) * detIn;
         else
             lowEnv = lowRelCoeff * lowEnv + (1.0f - lowRelCoeff) * detIn;
 
