@@ -1,248 +1,129 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-UpwardCompressorAudioProcessor::UpwardCompressorAudioProcessor()
-    : AudioProcessor (BusesProperties()
-                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "Parameters", createParameterLayout())
+CustomFaderLookAndFeel::CustomFaderLookAndFeel() {}
+
+void CustomFaderLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
+                                               float sliderPos, float minSliderPos, float maxSliderPos,
+                                               const juce::Slider::SliderStyle style, juce::Slider& slider)
 {
+    juce::ignoreUnused (minSliderPos, maxSliderPos, style);
+
+    const float capW = 46.0f;
+    const float capH = 24.0f;
+    const float capX = (float)x + ((float)width - capW) * 0.5f;
+    const float capY = sliderPos - capH * 0.5f;
+
+    // Fondo del cap
+    g.setColour (juce::Colour::fromRGB (28, 30, 34));
+    g.fillRoundedRectangle (capX, capY, capW, capH, 3.0f);
+
+    // Borde
+    g.setColour (juce::Colour::fromRGB (110, 115, 125));
+    g.drawRoundedRectangle (capX, capY, capW, capH, 3.0f, 1.0f);
+
+    // Texto del valor
+    g.setColour (juce::Colour::fromRGB (240, 242, 245));
+    g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::g.drawText (juce::String (slider.getValue(), 1), (int)capX, (int)capY, (int)capW, (int)capH, juce::Justification::centred, false);
 }
 
-UpwardCompressorAudioProcessor::~UpwardCompressorAudioProcessor()
+UpwardCompressorAudioProcessorEditor::UpwardCompressorAudioProcessorEditor (UpwardCompressorAudioProcessor& p)
+    : AudioProcessorEditor (&p), audioProcessor (p)
 {
+    setSize (780, 580);
+
+    auto setup = [this](juce::Slider& s) {
+        s.setSliderStyle (juce::Slider::LinearVertical);
+        s.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
+        s.setLookAndFeel (&customLookAndFeel);
+        addAndMakeVisible (s);
+    };
+
+    setup (lowSlider);
+    setup (highSlider);
+    setup (outputSlider);
+
+    lowAttachment    = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (audioProcessor.apvts, "lowLevel",   lowSlider);
+    highAttachment   = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (audioProcessor.apvts, "highLevel",  highSlider);
+    outputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (audioProcessor.apvts, "outputGain", outputSlider);
+
+    startTimerHz (60);
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudioProcessor::createParameterLayout()
+UpwardCompressorAudioProcessorEditor::~UpwardCompressorAudioProcessorEditor()
 {
-    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { "lowLevel", 1 },
-        "Low Level",
-        juce::NormalisableRange<float> (0.0f, 48.0f, 0.1f),
-        6.0f));
-
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { "highLevel", 1 },
-        "High Level",
-        juce::NormalisableRange<float> (-48.0f, 0.0f, 0.1f),
-        -6.0f));
-
-    params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { "outputGain", 1 },
-        "Output Gain",
-        juce::NormalisableRange<float> (-60.0f, 0.0f, 0.1f),
-        -0.5f));
-
-    return { params.begin(), params.end() };
+    stopTimer();
+    lowSlider.setLookAndFeel (nullptr);
+    highSlider.setLookAndFeel (nullptr);
+    outputSlider.setLookAndFeel (nullptr);
 }
 
-const juce::String UpwardCompressorAudioProcessor::getName() const
+void UpwardCompressorAudioProcessorEditor::timerCallback()
 {
-    return JucePlugin_Name;
+    currentLowMeter  = std::max (audioProcessor.meterLowBoost.load(),  currentLowMeter  * 0.92f);
+    currentHighMeter = std::min (audioProcessor.meterHighAtten.load(), currentHighMeter * 0.90f);
+    currentPeakL     = std::max (audioProcessor.meterPeakL.load(),     currentPeakL     * 0.88f);
+    currentPeakR     = std::max (audioProcessor.meterPeakR.load(),     currentPeakR     * 0.88f);
+    repaint();
 }
 
-bool UpwardCompressorAudioProcessor::acceptsMidi() const
+void UpwardCompressorAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    return false;
+    g.fillAll (juce::Colour::fromRGB (16, 17, 20));
+
+    // Paneles
+    g.setColour (juce::Colour::fromRGB (24, 26, 30));
+    g.fillRoundedRectangle (20.0f, 20.0f, 470.0f, 435.0f, 8.0f);
+    g.fillRoundedRectangle (510.0f, 20.0f, 250.0f, 435.0f, 8.0f);
+
+    // Titulos
+    g.setColour (juce::Colour::fromRGB (220, 225, 235));
+    g.setFont (juce::Font (juce::Font::getDefaultSansSerifFontName(), 13.0f, juce::Font::bold));
+    g.drawText ("LOW LEVEL",  20,  35, 235, 20, juce::Justification::centred, false);
+    g.drawText ("HIGH LEVEL", 255, 35, 235, 20, juce::Justification::centred, false);
+    g.drawText ("OUTPUT",     510, 35, 250, 20, juce::Justification::centred, false);
+
+    const float tY = 60.0f, tH = 300.0f;
+
+    // Low meter (Verde)
+    g.setColour (juce::Colours::black);
+    g.fillRoundedRectangle (130.0f, tY, 18.0f, tH, 2.0f);
+    float lH = std::min (1.0f, std::max (0.0f, currentLowMeter / 48.0f)) * tH;
+    g.setColour (juce::Colour::fromRGB (52, 211, 153));
+    if (lH > 1.0f) 
+        g.fillRoundedRectangle (131.0f, tY + tH - lH, 16.0f, lH, 2.0f);
+
+    // High meter (Rojo)
+    g.setColour (juce::Colours::black);
+    g.fillRoundedRectangle (350.0f, tY, 18.0f, tH, 2.0f);
+    float hH = std::min (1.0f, std::max (0.0f, std::abs (currentHighMeter) / 48.0f)) * tH;
+    g.setColour (juce::Colour::fromRGB (244, 63, 94));
+    if (hH > 1.0f) 
+        g.fillRoundedRectangle (351.0f, tY, 16.0f, hH, 2.0f);
+
+    // Output meters (Ambar)
+    g.setColour (juce::Colours::black);
+    g.fillRoundedRectangle (610.0f, tY, 12.0f, tH, 2.0f);
+    g.fillRoundedRectangle (638.0f, tY, 12.0f, tH, 2.0f);
+    g.setColour (juce::Colour::fromRGB (245, 158, 11));
+    float pL =(1.0f, std::max (0.0f, currentPeakL)) * tH;
+    float pR = std::min (1.0f, std::max (0.0f, currentPeakR)) * tH;
+    if (pL > 1.0f) 
+        g.fillRoundedRectangle (611.0f, tY + tH - pL, 10.0f, pL, 1.0f);
+    if (pR > 1.0f) 
+        g.fillRoundedRectangle (639.0f, tY + tH - pR, 10.0f, pR, 1.0f);
+
+    // Logos
+    g.setColour (juce::Colour::fromRGB (225, 228, 235));
+    g.setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::bold));
+    g.drawText ("A  |  R", 0, 485, getWidth(), 20, juce::Justification::centred, false);
+    g.drawText ("UPWARD COMPRESSOR", 0, 515, getWidth(), 18, juce::Justification::centred, false);
+    g.drawText ("Sonart.db", 0, 542, getWidth(), 16, juce::Justification::centred, false);
 }
 
-bool UpwardCompressorAudioProcessor::producesMidi() const
+void UpwardCompressorAudioProcessorEditor::resized()
 {
-    return false;
-}
-
-bool UpwardCompressorAudioProcessor::isMidiEffect() const
-{
-    return false;
-}
-
-double UpwardCompressorAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
-
-int UpwardCompressorAudioProcessor::getNumPrograms()
-{
-    return 1;
-}
-
-int UpwardCompressorAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
-
-void UpwardCompressorAudioProcessor::setCurrentProgram (int index)
-{
-    (index);getProgramName (int index)
-{
-    juce::ignoreUnused (index);
-    return {};
-}
-
-void UpwardCompressorAudioProcessor::changeProgramName (int index, const juce::String& newName)
-{
-    juce::ignoreUnused (index, newName);
-}
-
-void UpwardCompressor(double sampleRate, int samplesPerBlock)Unused (samplesPerBlock);
-
-    const double sr = sampleRate > 0.0 ? sampleRate : 44100.0;
-    lowAttCoeff  = static_cast<float> ((-1.0 / (20.0 * 0.001 * sr)));    lowRelCoeff  = static_cast<float> (std::exp (-1.0 / (150.0 * 0.001 * sr)));
-    highAttCoeff = static_cast<float> (std::exp (-1.0 / (5.0  * 0.001 * sr)));
-    highRelCoeff = static_cast<float> (std::exp (-1.0 / (80.0 * 0.001 * sr)));
-
-    lowEnv = 0.0f;
-    highEnv = 0.0f;
-    lowGainSmooth = 1.0f;
-    highGainSmooth = 1.0f;
-}
-
-void UpwardCompressorAudioProcessor::releaseResources()
-{
-}
-
-bool UpwardCompressorAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
-{
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-        return false;
-
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-
-    return true;
-}
-
-void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-{
-    ju(midiMessages);
-
-    const auto totalNumInputChannels  = getTotalNumInputChannels();
-    const auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    const int numSamples = buffer.getNumSamples();
-    if (numSamples == 0 || totalNumInputChannels == 0)
-        return;
-
-    const float pLow  = apvts.getRawParameterValue ("lowLevel")->load();
-    const float pHigh = apvts.getRawParameterValue ("highLevel")->load();
-    const float pOut  = apvts.getRawParameterValue ("outputGain")->load();
-
-    const float outGainLin = juce::Decibels::decibelsToGain (pOut);
-    const float downwardRatio = 3.0f;
-    const float downwardSlope = 1.0f - (1.0f / downwardRatio);
-
-    auto* channelDataL = buffer.getWritePointer (0);
-    auto* channelDataR = totalNumInputChannels > 1 ? buffer.getWritePointer (1) : channelDataL;
-
-    float blockMaxBoost = 0.0f;
-    float blockMaxAtten = 0.0f;
-    float blockPeakL = 0.0f;
-    float blockPeakR = 0.0f;
-
-    for (int i = 0; i < numSamples; ++i)
-    {
-        const float dryL = channelDataL[i];
-        const float dryR = channelDataR[i];
-        const float detIn = std::max (std::abs (dryL), std::abs (dryR));
-
-        // 1. LOW LEVEL UPWARD COMPRESSION
-        if (detIn > lowEnv)
-            lowEnv = lowAttCoeff * lowEnv + (1.0f - lowAttCoeff) * detIn;
-        else
-            lowEnv = lowRelCoeff * lowEnv + (1.0f - lowRelCoeff) * detIn;
-
-        const float inDb = juce::Decibels::gainToDecibels (std::max (1e-6f, lowEnv));
-        float targetLowBoostDb = 0.0f;
-
-        if (pLow > 0.05f)
-        {
-            const float threshDb = -48.0f + pLow;
-            if (inDb < threshDb)
-            {
-                const float depth = threshDb - inDb;
-                const float boost = std::min (pLow, depth * 0.65f);
-                const float peakSafety = (inDb >= -6.0f) ? 0.0f :(0.0f, std::min (1.0f, (-6.0f - inDb) / 18.0f));
-                targetLowBoostDb = boost * peakSafety;
-            }
-        }
-
-        const float targetLowGainLin = juce::Decibels::decibelsToGain (targetLowBoostDb);
-        if (targetLowGainLin > lowGainSmooth)
-            lowGainSmooth = lowAttCoeff * lowGainSmooth + (1.0f - lowAttCoeff) * targetLowGainLin;
-        else
-            lowGainSmooth = lowRelCoeff * lowGainSmooth + (1.0f - lowRelCoeff) * targetLowGainLin;
-
-        const float actualLowBoostDb = juce::(std::max (1e-6f, lowGainSmooth));blockMaxBoost = std::max (blockMaxBoost, actualLowBoostDb);
-
-        // 2. HIGH LEVEL DOWNWARD COMPRESSION
-        if (detIn > highEnv)
-            highEnv = highAttCoeff * highEnv + (1.0f - highAttCoeff) * detIn;
-        else
-            highEnv = highRelCoeff * highEnv + (1.0f - highRelCoeff) * detIn;
-
-        const float highInDb = juce::Decibels::gainToDecibels (std::max (1e-6f, highEnv));
-        float targetHighAttenDb = 0.0f;
-
-        if (pHigh < -0.05f && highInDb > pHigh)
-        {
-            targetHighAttenDb = -downwardSlope * (highInDb - pHigh);
-        }
-
-        const float targetHighGainLin = juce::Decibels::decibelsToGain (targetHighAttenDb);
-        if (targetHighGainLin < highGainSmooth)
-            highGainSmooth = highAttCoeff * highGainSmooth + (1.0f - highAttCoeff) * targetHighGainLin;
-        else
-            highGainSmooth = highRelCoeff * highGainSmooth + (1.0f - highRelCoeff) * targetHighGainLin;
-
-        const float actualHighAttenDb = juce::Decibels::gainToDecibels (std::max (1e-6f, highGainSmooth));
-        blockMaxAtten = std::min (blockMaxAtten, actualHighAttenDb);
-
-        // 3. COMBINAR DINAMICA Y GANANCIA DE SALIDA
-        const float totalGain = lowGainSmooth * highGainSmooth * outGainLin;
-        const float outL = std::clamp (dryL * totalGain, -1.0f, 1.0f);
-        const float outR = std::clamp (dryR * totalGain, -1.0f, 1.0f);
-
-        channelDataL[i] = outL;
-        channelDataR[i] = outR;
-
-        blockPeakL = std::max (blockPeakL, std::abs (outL));
-        blockPeakR = std::max (blockPeakR, std::abs (outR));
-    }
-
-    meterLowBoost.store (blockMaxBoost);
-    meterHighAtten.store (blockMaxAtten);
-    meterPeakL.store (blockPeakL);
-    meterPeakR.store (blockPeakR);
-}
-
-bool UpwardCompressorAudioProcessor::hasEditor() const
-{
-    return true;
-}
-
-juce::AudioProcessorEditor* UpwardCompressorAudioProcessor::createEditor()
-{
-    return new UpwardCompressorAudioProcessorEditor (*this);
-}
-
-void UpwardCompressorAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
-{
-    auto state = apvts.copyState();
-    std::unique_ptr<juce::XmlElement> xml (state.createXml());
-    copyXmlToBinary (*xml, destData);
-}
-
-void UpwardCompressorAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
-{
-    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
-    if (xmlState != nullptr && xmlState->hasTagName (apvts.state.getType()))
-        apvts.replaceState (juce::(*xmlState));PluginFilter()
-{
-    return new UpwardCompressorAudioProcessor();
+    lowSlider.setBounds (115, 60, 48, 300);
+    highSlider.setBounds (335, 60, 48, 300);
+    outputSlider.setBounds (610, 60, 48, 300);
 }
