@@ -6,7 +6,8 @@
 UpwardCompressorAudioProcessor::UpwardCompressorAudioProcessor()
     : AudioProcessor (BusesProperties()
                         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                        .withOutput ("Output", juce::true)),())
+        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
+      apvts (*this, nullptr, "Parameters", createParameterLayout())
 {
 }
 
@@ -19,7 +20,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudioProcess
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        ju{ "lowLevel", 1 },isableRange<float> (0.0f, 48.0f, 0.1f),
+             juce::ParameterID { "lowLevel", 1 }, "Low Level", juce::NormalisableRange<float> (0.0f, 48.0f, 0.1f),
         6.0f));
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
