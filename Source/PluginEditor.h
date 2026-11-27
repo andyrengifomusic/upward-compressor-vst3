@@ -1,10 +1,10 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
 
-class CustomFaderLookAndFeel : public juce::LookAndFeel_V4
-{
+class CustomFaderLookAndFeel : public{
 public:
     CustomFaderLookAndFeel();
     void drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
@@ -12,8 +12,7 @@ public:
                            const juce::Slider::SliderStyle style, juce::Slider& slider) override;
 };
 
-class UpwardCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                            private juce::Timer
+class UpwardCompressorAudioProcessorEditor : public juprivate juce::Timer
 {
 public:
     explicit UpwardCompressorAudioProcessorEditor (UpwardCompressorAudioProcessor&);
@@ -23,13 +22,10 @@ public:
     void resized() override;
     void timerCallback() override;
 
-private:
-    UpwardCompressorAudioProcessor& audioProcessor;
+UpwardCompressorAudioProcessor& audioProcessor;
     CustomFaderLookAndFeel customLookAndFeel;
 
-    juce::Slider lowSlider;
-    juce::Slider highSlider;
-    juce::Slider outputSlider;
+    lowSlider;;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lowAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> highAttachment;
