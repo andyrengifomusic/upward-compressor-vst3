@@ -8,12 +8,9 @@ class CustomFaderLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
     CustomFaderLookAndFeel();
-    void drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
-                           float sliderPos, float minSliderPos, float maxSliderPos,
-                           const juce::Slider::SliderStyle style, juce::Slider& slider) override;
-};
-
-class UpwardCompressorAudioProcessorEditor : publicprivate juce::Timer
+    void drawLinearSlider (g, int x, int y, int width, int height,, float minSliderPos, float maxSliderPos,
+                           const juce::Slider::SliderStyle style, juslider) override;AudioProcessorEditor,
+                                            private juce::Timer
 {
 public:
     explicit UpwardCompressorAudioProcessorEditor (UpwardCompressorAudioProcessor&);
@@ -26,9 +23,7 @@ public:
 UpwardCompressorAudioProcessor& audioProcessor;
     CustomFaderLookAndFeel customLookAndFeel;
 
-    juce::Slider lowSlider;
-    juce::Slider highSlider;
-    juce::Slider outputSlider;
+lowSlider;Slider;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lowAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> highAttachment;
