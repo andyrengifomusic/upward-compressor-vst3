@@ -4,7 +4,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
 
-class CustomFaderLookAndFeel : public{
+class CustomFaderLookAndFeel : public juce::LookAndFeel_V4
+{
 public:
     CustomFaderLookAndFeel();
     void drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
@@ -12,7 +13,7 @@ public:
                            const juce::Slider::SliderStyle style, juce::Slider& slider) override;
 };
 
-class UpwardCompressorAudioProcessorEditor : public juprivate juce::Timer
+class UpwardCompressorAudioProcessorEditor : publicprivate juce::Timer
 {
 public:
     explicit UpwardCompressorAudioProcessorEditor (UpwardCompressorAudioProcessor&);
@@ -25,7 +26,9 @@ public:
 UpwardCompressorAudioProcessor& audioProcessor;
     CustomFaderLookAndFeel customLookAndFeel;
 
-    lowSlider;;
+    juce::Slider lowSlider;
+    juce::Slider highSlider;
+    juce::Slider outputSlider;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lowAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> highAttachment;
