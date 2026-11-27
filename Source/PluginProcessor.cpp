@@ -5,8 +5,9 @@
 
 UpwardCompressorAudioProcessor::UpwardCompressorAudioProcessor()
     : AudioProcessor (BusesProperties()
-                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                        .withOutput ("Output", juce::AudioChanneltrue)),{
+                        .withInput  ("Input",  juce::AudioChanneltrue))),
+      apvts (*this, nullptr, "Parameters", createParameterLayout())
+{
 }
 
 UpwardCompressorAudioProcessor::~UpwardCompressorAudioProcessor()
@@ -24,9 +25,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout UpwardCompressorAudioProcess
         6.0f));
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { "highLevel", 1 },
-        "High Level",
-        juce::NormalisableRange<float> (-48.0f, 0.0f, 0.1f),
+        { "highLevel", 1 },NormalisableRange<float> (-48.0f, 0.0f, 0.1f),
         -6.0f));
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
@@ -84,9 +83,10 @@ const juce::String UpwardCompressorAudioProcessor::getProgramName (int index)
     return {};
 }
 
-void UpwardCompressorAudioProcessor::changeProgramName (int index, const juce::String& newName)
-{
-    ju(index, newName);double sampleRate, int samplesPerBlock)
+void UpwardCompressorAudioProcessor::changeProgramName (int index, constnewName)
+}
+
+void UpwardCompressorAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     juce::ignoreUnused (samplesPerBlock);
 
@@ -109,8 +109,7 @@ void UpwardCompressorAudioProcessor::releaseResources()
 bool UpwardCompressorAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-        return false;
+     && layouts.getMainOutputChannelSet() != juce::Audioreturn false;
 
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
@@ -153,9 +152,7 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
     {
         const float dryL = channelDataL[i];
         const float dryR = channelDataR[i];
-        const float detIn = std::max (std::abs (dryL), std::abs (dryR));
-
-        // 1. LOW LEVEL UPWARD COMPRESSION
+        const float detIn = std::max ((dryL), std::abs (dryR)); COMPRESSION
         if (detIn > lowEnv)
             lowEnv = lowAttCoeff * lowEnv + (1.0f - lowAttCoeff) * detIn;
         else
@@ -170,7 +167,8 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
             if (inDb < threshDb)
             {
                 const float depth = threshDb - inDb;
-                const float boost =(pLow, depth * 0.65f);inDb >= -6.0f) ? 0.0f : std::max (0.0f, std::min (1.0f, (-6.0f - inDb) / 18.0f));
+                const float boost = std::min (pLow, depth * 0.65f);
+                const float peakSafety = (inDb >= -6.0f) ? 0.0f : std::max (0.0f, std::min (1.0f, (-6.0f - inDb) / 18.0f));
                 targetLowBoostDb = boost * peakSafety;
             }
         }
@@ -198,7 +196,8 @@ void UpwardCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buf
             targetHighAttenDb = -downwardSlope * (highInDb - pHigh);
         }
 
-        const float targetHighGainLin = juce::(targetHighAttenDb);GainSmooth)
+        const float targetHighGainLin = juce::Decibels::decibelsToGain (targetHighAttenDb);
+        if (targetHighGainLin < highGainSmooth)
             highGainSmooth = highAttCoeff * highGainSmooth + (1.0f - highAttCoeff) * targetHighGainLin;
         else
             highGainSmooth = highRelCoeff * highGainSmooth + (1.0f - highRelCoeff) * targetHighGainLin;
